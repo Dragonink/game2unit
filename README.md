@@ -39,3 +39,16 @@ game2unit steam -- %command%
 -a "steam_${STEAM_COMPAT_APP_ID}"
 -d $game_name
 ```
+
+### Minecraft — [Prism Launcher](https://prismlauncher.org/)
+**Setup instructions:**  
+Set the [*Wrapper command*](https://prismlauncher.org/wiki/help-pages/custom-commands/) to something like:
+```
+game2unit minecraft-prism --
+```
+
+**Generated `app2unit` options:**  
+```
+-a "minecraft_prism_${INST_ID}"
+-d "Minecraft (${INST_NAME})"
+```
