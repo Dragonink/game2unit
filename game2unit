@@ -1,0 +1,9 @@
+#!/usr/bin/env nu
+
+# Wrapper around `app2unit`.
+def --wrapped main [
+	--help (-h) # Display the help message
+	...args # Arguments passed to `app2unit`
+]: nothing -> any {
+	exec app2unit ...$args
+}
