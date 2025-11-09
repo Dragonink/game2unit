@@ -1,0 +1,33 @@
+#!/usr/bin/env nu
+
+# Wrapper around `app2unit`
+def --wrapped main [
+	--help (-h) # Display the help message.
+	...args # Arguments passed to `app2unit`
+]: nothing -> any {
+	exec app2unit ...$args
+}
+
+# Generic function for launcher subcommands
+def --wrapped main_launcher [
+	name: string # Name of the launcher
+	extract: closure # Function that extracts the unit properties
+	...args # Arguments passed to `app2unit`
+]: nothing -> any {
+	let options: oneof<list<string>, nothing> = do --capture-errors $extract
+	if $options != null {
+		(
+			"game2unit => app2unit " + (
+				$options
+				| each { $"'($in)'" }
+				| str join (char space)
+			)
+			| print --stderr $in
+		)
+		main ...$options ...$args
+	} else {
+		error make --unspanned {
+			msg: $"environment is not ($name)",
+		}
+	}
+}
