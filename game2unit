@@ -31,3 +31,13 @@ def --wrapped main_launcher [
 		}
 	}
 }
+
+# Wrapper around `app2unit` that extracts the unit properties from Steam.
+def --wrapped "main steam" [
+	--help (-h) # Display the help message.
+	...args # Arguments passed to `app2unit`
+]: nothing -> any {
+	use launchers/steam.nu main
+
+	main_launcher "Steam" {steam} ...$args
+}
