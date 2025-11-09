@@ -27,3 +27,18 @@ See the [supported launchers](#supported-launchers) for setup instructions and d
    ```
 
 ## Supported launchers
+
+### [Steam](https://store.steampowered.com/)
+**Setup instructions:**  
+Set the [*Launch Options*](https://help.steampowered.com/en/faqs/view/7D01-D2DD-D75E-2955) of your games to something like:
+```
+game2unit steam -- %command%
+```
+
+**Generated `app2unit` arguments:**  
+```
+-a "steam_${STEAM_COMPAT_APP_ID}"
+-d "${steam_app_name}"
+```
+where:
+- **`steam_app_name`** is the name retrieved from the appliations's `appmanifest.acf` file

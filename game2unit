@@ -1,9 +1,26 @@
 #!/usr/bin/env nu
 
+use launchers/steam.nu main
+
 # Wrapper around `app2unit`.
 def --wrapped main [
 	--help (-h) # Display the help message
 	...args # Arguments passed to `app2unit`
 ]: nothing -> any {
 	exec app2unit ...$args
+}
+
+# Wrapper around `app2unit` that extracts the unit properties from Steam.
+def --wrapped "main steam" [
+	--help (-h) # Display the help message
+	...args # Arguments passed to `app2unit`
+]: nothing -> any {
+	let launcher_args = steam
+	if $launcher_args != null {
+		main -a $launcher_args.app_name -d $launcher_args.description ...$args
+	} else {
+		error make --unspanned {
+			msg: "environment is not Steam",
+		}
+	}
 }
