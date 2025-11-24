@@ -42,6 +42,16 @@ def --wrapped "main steam" [
 	main_launcher "Steam" {steam} ...$args
 }
 
+# Wrapper around `app2unit` that extracts the unit properties from Heroic Launcher.
+def --wrapped "main heroic" [
+	--help (-h) # Display the help message.
+	...args # Arguments passed to `app2unit`
+]: nothing -> any {
+	use launchers/heroic.nu main
+
+	main_launcher "Heroic Launcher" {heroic} ...$args
+}
+
 # Wrapper around `app2unit` that extracts the unit properties from [Minecraft] Prism Launcher.
 def --wrapped "main minecraft-prism" [
 	--help (-h) # Display the help message.

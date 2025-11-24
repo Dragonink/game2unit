@@ -40,6 +40,18 @@ game2unit steam -- %command%
 -d $game_name
 ```
 
+### [Heroic Launcher](https://heroicgameslauncher.com/)
+**Setup instructions:**  
+Add a *Wrapper command* (in *Settings*, *Game Defaults*) with the following parameters:
+- **Name**: `game2unit`
+- **Arguments**: `heroic --`
+
+**Generated `app2unit` options (Legendary):**  
+```
+-a "heroic_legendary_${HEROIC_APP_NAME}"
+-d $game_name
+```
+
 ### Minecraft — [Prism Launcher](https://prismlauncher.org/)
 **Setup instructions:**  
 Set the [*Wrapper command*](https://prismlauncher.org/wiki/help-pages/custom-commands/) to something like:
