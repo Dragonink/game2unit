@@ -52,6 +52,12 @@ Add a *Wrapper command* (in *Settings*, *Game Defaults*) with the following para
 -d $game_name
 ```
 
+**Generated `app2unit` options (GOGDL):**  
+```
+-a "heroic_gogdl_${HEROIC_APP_NAME}"
+-d $game_name
+```
+
 ### Minecraft — [Prism Launcher](https://prismlauncher.org/)
 **Setup instructions:**  
 Set the [*Wrapper command*](https://prismlauncher.org/wiki/help-pages/custom-commands/) to something like:
