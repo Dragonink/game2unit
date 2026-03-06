@@ -22,6 +22,9 @@ impl Display for UnitPropertySource {
 	}
 }
 
+#[cfg(feature = "steam")]
+mod steam;
+
 /// Attempts to source the unit properties from all environments.
 ///
 /// Returns `Ok(None)` if no environment was detected.
@@ -29,7 +32,10 @@ impl Display for UnitPropertySource {
 /// # Errors
 /// Returns any error returned by a source.
 pub(super) fn source_unit_properties() -> rootcause::Result<Option<UnitLauncherArgs>> {
-	const SOURCES: &[UnitPropertySource] = &[];
+	const SOURCES: &[UnitPropertySource] = &[
+		#[cfg(feature = "steam")]
+		steam::SOURCE,
+	];
 
 	for source in SOURCES {
 		if let Some(args) = (source.source)()
