@@ -1,4 +1,10 @@
 #![doc = env!("CARGO_PKG_DESCRIPTION")]
+//!
+//! # Crate features
+#![cfg_attr(
+	feature = "document-features",
+	doc = document_features::document_features!(feature_label = r#"<span class="stab portability" style="font-weight: bold;"><code>{feature}</code></span>"#),
+)]
 
 use std::process::ExitCode;
 
