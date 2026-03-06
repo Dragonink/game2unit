@@ -8,6 +8,7 @@ publish = false
 
 
 [dependencies]
+rootcause = "0.12.1"
 
 
 [lints.rust]
