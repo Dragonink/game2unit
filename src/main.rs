@@ -6,6 +6,7 @@ use rootcause::prelude::*;
 
 use self::unit_launcher::UnitLauncher;
 
+mod sources;
 mod unit_launcher;
 
 /// Main function
@@ -15,12 +16,20 @@ mod unit_launcher;
 /// See [`std::os::unix::process::CommandExt::exec()`] for more details.
 ///
 /// # Errors
-/// Returns an error if:
-/// - executing the unit launcher returns an error.
+/// Returns the error thrown while executing the unit launcher.
 fn run() -> rootcause::Result<()> {
 	let mut unit_launcher = std::env::var_os("GAME2UNIT_UNIT_LAUNCHER")
 		.map(UnitLauncher::new)
 		.unwrap_or_default();
+
+	#[expect(clippy::print_stderr, reason = "display error report")]
+	match sources::source_unit_properties() {
+		Ok(Some(args)) => {
+			unit_launcher.args(args);
+		}
+		Ok(None) => {}
+		Err(err) => eprintln!("{err}"),
+	}
 
 	unit_launcher
 		.args(std::env::args_os().skip(1))
