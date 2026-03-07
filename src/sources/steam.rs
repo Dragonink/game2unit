@@ -1,10 +1,12 @@
 //! Provides the [Steam unit property source](SOURCE).
 
+mod shortcut;
+mod steam_app;
+
 use std::{
 	env::VarError,
 	fmt::{self, Debug, Display, Formatter},
 	num::NonZeroU32,
-	path::PathBuf,
 	str::FromStr,
 };
 
@@ -28,71 +30,56 @@ pub(super) const SOURCE: UnitPropertySource = UnitPropertySource {
 /// # Errors
 /// Returns an error if:
 /// - the parsing of the found App ID fails;
-/// - an App Manifest cannot be found;
-/// - the found App Manifest cannot be deserialized.
+/// - [`steam_app::source()`] fails;
+/// - [`shortcut::source()`] fails.
 fn source() -> rootcause::Result<Option<UnitLauncherArgs>> {
 	let mut args = UnitLauncherArgs::new();
 	args.force_scope();
 
-	let Some(app_id) = retrieve_app_id().context("Failed to retrieve the App ID")? else {
-		return Ok(None);
-	};
-	args.app_name(format!("steam-{app_id}"));
-
-	let manifest_path = find_app_manifest(app_id)
-		.and_then(|opt| opt.ok_or_report().map_err(Report::into_dynamic))
-		.context("Could not find an App Manifest")
-		.attach_custom::<AppIdHandler, _>(app_id)?;
-	args.unit_source_path(&manifest_path);
-
-	let manifest = std::fs::read_to_string(&manifest_path)
-		.context("Failed to read the App Manifest")
-		.attach_with(|| manifest_path.display().to_string())?;
-	let manifest: AppManifest = serde_vdf::text::from_str(&manifest)
-		.context("Failed to deserialize the App Manifest")
-		.attach_with(|| manifest_path.display().to_string())?;
-	if manifest.app_state.app_id != app_id {
-		return Err(report!("Incorrect App Manifest")
-			.attach(format!("App ID in Manifest: {}", manifest.app_state.app_id))
-			.attach_custom::<AppIdHandler, _>(app_id));
+	match retrieve_game_id().context("Failed to retrieve the Game ID")? {
+		Some(GameId::SteamApp(app_id)) => steam_app::source(&mut args, app_id)?,
+		Some(GameId::Shortcut(app_id)) => shortcut::source(&mut args, app_id)?,
+		None => return Ok(None),
 	}
-	args.game_title(manifest.app_state.name);
 
 	Ok(Some(args))
 }
 
-/// Structure of Steam App Manifest files
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-struct AppManifest<'a> {
-	/// Metadata and state of the App
-	#[serde(borrow)]
-	app_state: AppState<'a>,
+/// Steam Game ID
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum GameId {
+	/// Steam App ID
+	SteamApp(AppId),
+	/// Shortcut App ID
+	Shortcut(AppId),
+}
+impl GameId {
+	/// Creates a Game ID if the given value is valid.
+	fn new(value: u64) -> Option<Self> {
+		u32::try_from(value).map_or_else(
+			|_| AppId::new((value >> u32::BITS) as _).map(Self::Shortcut),
+			|value| AppId::new(value).map(Self::SteamApp),
+		)
+	}
 }
 
-/// Metadata and state of a Steam App
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
-struct AppState<'a> {
-	/// App ID
-	#[serde(rename = "appid")]
-	app_id: AppId,
-	/// App name
-	name: &'a str,
-}
-
-/// Retrieves the App ID from the environment.
-///
-/// Returns `Ok(None)` if an App ID cannot be found in the environment.
+/// Retrieves the Game ID from the environment.
 ///
 /// # Errors
-/// Returns an error if the parsing of the found App ID fails.
-fn retrieve_app_id() -> rootcause::Result<Option<AppId>> {
-	const VAR: &str = "SteamAppId";
+/// Returns an error if the parsing of the found Game ID fails.
+fn retrieve_game_id() -> rootcause::Result<Option<GameId>> {
+	const VAR: &str = "SteamGameId";
 
 	match std::env::var(VAR) {
 		Ok(value) => value
 			.parse()
-			.context("Invalid App ID")
+			.map_err(From::from)
+			.and_then(|value| {
+				GameId::new(value)
+					.ok_or_report()
+					.map_err(Report::into_dynamic)
+			})
+			.context("Invalid Game ID")
 			.attach_with(|| format!("{VAR}={value:?}"))
 			.map_err(Report::into_dynamic)
 			.map(Some),
@@ -101,25 +88,16 @@ fn retrieve_app_id() -> rootcause::Result<Option<AppId>> {
 	}
 }
 
-/// Finds the Manifest of the App given its ID.
-///
-/// # Errors
-/// Returns an error if the Steam library paths cannot be found.
-fn find_app_manifest(app_id: AppId) -> rootcause::Result<Option<PathBuf>> {
-	let library_paths = std::env::var_os("STEAM_COMPAT_LIBRARY_PATHS")
-		.map(PathBuf::from)
-		.or_else(|| dirs::data_local_dir().map(|dir| dir.join("Steam").join("steamapps")))
-		.context("Could not find the library directories")?;
-	Ok(std::env::split_paths(&library_paths).find_map(|library| {
-		let manifest_path = library.join(format!("appmanifest_{app_id}.acf"));
-		manifest_path.exists().then_some(manifest_path)
-	}))
-}
-
 /// Steam App ID
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 #[serde(transparent)]
 struct AppId(NonZeroU32);
+impl AppId {
+	/// Creates an App ID if the given value is valid.
+	fn new(value: u32) -> Option<Self> {
+		NonZeroU32::new(value).map(Self)
+	}
+}
 impl FromStr for AppId {
 	type Err = <NonZeroU32 as FromStr>::Err;
 
