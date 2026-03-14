@@ -1,5 +1,7 @@
 #![doc = env!("CARGO_PKG_DESCRIPTION")]
 
+mod handlers;
+
 fn main() {
 	setup_logger();
 
