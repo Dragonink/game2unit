@@ -11,7 +11,7 @@ fn main() {
 	setup_logger();
 
 	match launch_systemd_unit() {
-		Ok(()) => {}
+		Ok(()) => unreachable!(),
 		Err(err) => log::error!("Fatal error: {err}"),
 	}
 }
@@ -20,17 +20,21 @@ fn main() {
 ///
 /// # Errors
 /// Returns an error if:
-/// - the systemd unit launcher cannot be constructed.
+/// - the systemd unit launcher cannot be constructed;
+/// - the execution of the configured launcher fails.
 fn launch_systemd_unit() -> rootcause::Result<()> {
 	const LAUNCHER_VAR: &str = "GAME2UNIT_LAUNCHER";
-	let _launcher = match std::env::var_os(LAUNCHER_VAR) {
+	let mut launcher = match std::env::var_os(LAUNCHER_VAR) {
 		Some(command) => Launcher::from_shell_command(&command)
 			.context("Failed to construct systemd unit launcher")
 			.attach_custom::<handlers::EnvVarHandler, _>((LAUNCHER_VAR, command))?,
 		None => Launcher::default(),
 	};
 
-	Ok(())
+	launcher.args(std::env::args_os().skip(1));
+	Err(report!(launcher.exec())
+		.context("Failed to execute systemd unit launcher")
+		.into_dynamic())
 }
 
 /// Configures and installs the application logger.

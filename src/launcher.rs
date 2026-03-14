@@ -57,6 +57,32 @@ impl Launcher {
 		self.0.args(args);
 		self
 	}
+
+	/// Executes the configured launcher, replacing this process.
+	///
+	/// On success this function will not return,
+	/// and otherwise it will return an error.
+	/// See [`std::os::unix::process::CommandExt::exec()`] for more details.
+	pub(super) fn exec(&mut self) -> std::io::Error {
+		const LOG_LEVEL: log::Level = log::Level::Debug;
+		if log::log_enabled!(LOG_LEVEL) {
+			let command = shlex::bytes::Quoter::new()
+				.allow_nul(true)
+				.join(
+					std::iter::once(self.0.get_program())
+						.chain(self.0.get_args())
+						.map(OsStr::as_bytes),
+				)
+				.map_or_else(|_| unreachable!(), OsString::from_vec);
+			log::log!(
+				LOG_LEVEL,
+				"Executing systemd unit launcher:\n{}",
+				command.display()
+			);
+		}
+
+		std::os::unix::process::CommandExt::exec(&mut self.0)
+	}
 }
 impl Default for Launcher {
 	fn default() -> Self {
