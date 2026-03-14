@@ -6,6 +6,7 @@ use self::launcher::Launcher;
 
 mod handlers;
 mod launcher;
+mod sources;
 
 fn main() {
 	setup_logger();
@@ -30,6 +31,11 @@ fn launch_systemd_unit() -> rootcause::Result<()> {
 			.attach_custom::<handlers::EnvVarHandler, _>((LAUNCHER_VAR, command))?,
 		None => Launcher::default(),
 	};
+
+	if let Some(sourced) = sources::source_systemd_unit_properties() {
+		log::debug!("Sourced systemd unit properties:\n{sourced:#?}");
+		launcher.sourced_args(&sourced);
+	}
 
 	launcher.args(std::env::args_os().skip(1));
 	Err(report!(launcher.exec())

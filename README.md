@@ -9,6 +9,8 @@ Game2Unit is basically a wrapper around an external *systemd unit launcher*.
 > [!IMPORTANT]
 > All arguments given to Game2Unit will be passed down to the *systemd unit launcher*.
 
+Moreover, additional arguments retrieved from a [source](#sources) are passed to the launcher as well.
+
 ### *systemd unit launcher* configuration
 The *systemd unit launcher* command is configured from the following sources, by decreasing priority:
 1. `GAME2UNIT_LAUNCHER` runtime environment variable
@@ -26,5 +28,14 @@ export GAME2UNIT_LAUNCHER='uwsm app'
 
 The *systemd unit launcher* is expected to accept the following argument syntax:
 ```
-<LAUNCHER> <program> [<program_args>...]
+<LAUNCHER> [-a <app_name>] [-d <unit_description>] [-p <key>=<value>] [-t scope] <program> [<program_args>...]
 ```
+Launcher option | Description
+--:|:--
+**`-a <app_name>`** | Application name substring of unit ID
+**`-d <unit_description>`** | Unit description
+**`-p <key>=<value>`** | Additional unit property
+**`-t scope`** | Force unit type to be a scope
+
+## Sources
+Game2Unit retrieves additional systemd unit properties (like the unit name and description) from a source environment.

@@ -1,8 +1,11 @@
 //! Provides the [systemd unit launcher](Launcher).
 
 use std::{
+	collections::HashMap,
 	ffi::{OsStr, OsString},
+	fmt::Display,
 	os::unix::ffi::{OsStrExt as _, OsStringExt as _},
+	path::Path,
 	process::Command,
 };
 
@@ -46,15 +49,49 @@ impl Launcher {
 		}
 	}
 
+	/// Adds an argument to pass to the launcher.
+	///
+	/// See [`Command::arg()`] for more details.
+	///
+	/// To pass multiple arguments, see [`Self::args()`].
+	pub(super) fn arg<A>(&mut self, arg: A) -> &mut Self
+	where
+		A: AsRef<OsStr>,
+	{
+		self.0.arg(arg);
+		self
+	}
+
 	/// Adds multiple arguments to pass to the launcher.
 	///
 	/// See [`Command::args()`] for more details.
+	///
+	/// To pass a single argument, see [`Self::arg()`].
 	pub(super) fn args<A, I>(&mut self, args: I) -> &mut Self
 	where
 		A: AsRef<OsStr>,
 		I: IntoIterator<Item = A>,
 	{
 		self.0.args(args);
+		self
+	}
+
+	/// Adds arguments from sourced unit properties.
+	pub(super) fn sourced_args(&mut self, sourced: &SourcedProperties) -> &mut Self {
+		self.arg("-a").arg(&sourced.app_name);
+		if let Some(game_title) = sourced.game_title.as_ref() {
+			self.arg("-d").arg(game_title);
+		}
+		for (key, value) in &sourced.properties {
+			let mut arg = key.clone();
+			arg.push("=");
+			arg.push(value);
+			self.arg("-p").arg(arg);
+		}
+		if sourced.force_scope {
+			self.arg("-t").arg("scope");
+		}
+
 		self
 	}
 
@@ -89,5 +126,73 @@ impl Default for Launcher {
 		#[expect(clippy::expect_used, reason = "report bad compile-time configuration")]
 		Self::from_shell_command(option_env!("GAME2UNIT_DEFAULT_LAUNCHER").unwrap_or("app2unit"))
 			.expect("Default systemd unit launcher command should be valid")
+	}
+}
+
+/// systemd unit properties retrieved from [sources](crate::sources)
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SourcedProperties {
+	/// Application name substring of the unit ID
+	app_name: OsString,
+	/// Game title, set as the unit description
+	game_title: Option<OsString>,
+	/// Additional unit properties
+	properties: HashMap<OsString, OsString>,
+	/// Forces the unit to be a scope.
+	force_scope: bool,
+}
+impl SourcedProperties {
+	/// Constructs a new set of systemd unit properties.
+	///
+	/// The application name is constructed from the given source ID and game ID.
+	pub(crate) fn new<I>(source_id: &str, game_id: I) -> Self
+	where
+		I: Display,
+	{
+		Self {
+			app_name: format!("{source_id}-{game_id}").into(),
+			game_title: None,
+			properties: HashMap::default(),
+			force_scope: false,
+		}
+	}
+
+	/// Sets the game title.
+	pub(crate) fn game_title<S>(&mut self, game_title: S) -> &mut Self
+	where
+		S: AsRef<OsStr>,
+	{
+		self.game_title = Some(game_title.as_ref().to_os_string());
+		self
+	}
+
+	/// Sets a unit property.
+	///
+	/// If a property with the same key is already set,
+	/// its value is updated.
+	fn property<K, V>(&mut self, key: K, value: V) -> &mut Self
+	where
+		K: AsRef<OsStr>,
+		V: AsRef<OsStr>,
+	{
+		self.properties
+			.insert(key.as_ref().to_os_string(), value.as_ref().to_os_string());
+		self
+	}
+
+	/// Sets the `SourcePath` unit property.
+	///
+	/// See [`Self::property()`] for more details.
+	pub(crate) fn source_path<P>(&mut self, source_path: P) -> &mut Self
+	where
+		P: AsRef<Path>,
+	{
+		self.property("SourcePath", source_path.as_ref())
+	}
+
+	/// Forces the unit to be a scope.
+	pub(crate) const fn force_scope(&mut self) -> &mut Self {
+		self.force_scope = true;
+		self
 	}
 }
