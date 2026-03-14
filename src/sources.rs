@@ -1,5 +1,8 @@
 //! Provides [systemd unit property sources](Source).
 
+#[cfg(feature = "steam")]
+mod steam;
+
 use std::fmt::{self, Display, Formatter};
 
 use crate::launcher::SourcedProperties;
@@ -7,6 +10,8 @@ use crate::launcher::SourcedProperties;
 /// Attemps to retrieve systemd unit properties from all sources.
 pub(super) fn source_systemd_unit_properties() -> Option<SourcedProperties> {
 	const SOURCES: &[Source] = &[
+		#[cfg(feature = "steam")]
+		steam::SOURCE,
 	];
 	SOURCES.iter().find_map(|source| {
 		log::debug!("Attempting to source systemd unit properties from {source}...");

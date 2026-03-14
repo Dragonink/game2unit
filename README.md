@@ -39,3 +39,9 @@ Launcher option | Description
 
 ## Sources
 Game2Unit retrieves additional systemd unit properties (like the unit name and description) from a source environment.
+
+### Steam
+Prepend `game2unit` to the *Launch Options* of your game, for example:
+```
+game2unit -- %command%
+```

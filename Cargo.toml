@@ -7,13 +7,18 @@ publish = false
 edition = "2024"
 
 [features]
-default = []
+default = ["steam"]
+
+steam = ["dep:dirs", "dep:serde", "dep:serde_vdf"]
 
 
 [dependencies]
+dirs = { version = "6.0.0", optional = true }
 env_logger = { version = "0.11.9", default-features = false }
 log = { version = "0.4.29", features = ["release_max_level_debug"] }
 rootcause = "0.12.1"
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+serde_vdf = { git = "https://github.com/Dragonink/serde_vdf.git", version = "0.1.0", features = ["memchr"], optional = true }
 shlex = "1.3.0"
 
 
