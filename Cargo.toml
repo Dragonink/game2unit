@@ -8,6 +8,8 @@ edition = "2024"
 
 
 [dependencies]
+env_logger = { version = "0.11.9", default-features = false }
+log = { version = "0.4.29", features = ["release_max_level_debug"] }
 
 
 [lints.rust]
