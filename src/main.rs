@@ -1,23 +1,34 @@
 #![doc = env!("CARGO_PKG_DESCRIPTION")]
 
+use rootcause::prelude::*;
+
+use self::launcher::Launcher;
+
 mod handlers;
+mod launcher;
 
 fn main() {
 	setup_logger();
 
-	match run() {
+	match launch_systemd_unit() {
 		Ok(()) => {}
 		Err(err) => log::error!("Fatal error: {err}"),
 	}
 }
 
-/// Main function
+/// Launches the command passed as this program's arguments through a [systemd unit launcher](Launcher).
 ///
 /// # Errors
-/// Currently does not return any error.
-#[expect(clippy::unnecessary_wraps, reason = "Result will be useful later")]
-fn run() -> rootcause::Result<()> {
-	log::info!("Hello, world!");
+/// Returns an error if:
+/// - the systemd unit launcher cannot be constructed.
+fn launch_systemd_unit() -> rootcause::Result<()> {
+	const LAUNCHER_VAR: &str = "GAME2UNIT_LAUNCHER";
+	let _launcher = match std::env::var_os(LAUNCHER_VAR) {
+		Some(command) => Launcher::from_shell_command(&command)
+			.context("Failed to construct systemd unit launcher")
+			.attach_custom::<handlers::EnvVarHandler, _>((LAUNCHER_VAR, command))?,
+		None => Launcher::default(),
+	};
 
 	Ok(())
 }

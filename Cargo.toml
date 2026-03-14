@@ -11,6 +11,7 @@ edition = "2024"
 env_logger = { version = "0.11.9", default-features = false }
 log = { version = "0.4.29", features = ["release_max_level_debug"] }
 rootcause = "0.12.1"
+shlex = "1.3.0"
 
 
 [lints.rust]
