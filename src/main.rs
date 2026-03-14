@@ -3,7 +3,21 @@
 fn main() {
 	setup_logger();
 
+	match run() {
+		Ok(()) => {}
+		Err(err) => log::error!("Fatal error: {err}"),
+	}
+}
+
+/// Main function
+///
+/// # Errors
+/// Currently does not return any error.
+#[expect(clippy::unnecessary_wraps, reason = "Result will be useful later")]
+fn run() -> rootcause::Result<()> {
 	log::info!("Hello, world!");
+
+	Ok(())
 }
 
 /// Configures and installs the application logger.
