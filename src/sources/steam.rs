@@ -1,5 +1,6 @@
 //! Source systemd unit properties from Steam.
 
+mod shortcut;
 mod steam_app;
 
 use std::{
@@ -36,13 +37,9 @@ fn source_systemd_unit_properties() -> rootcause::Result<SourcedProperties> {
 		.map(AppId::new)
 		.context("Invalid App ID")
 		.attach_custom::<crate::handlers::EnvVarHandler, _>((APP_ID_VAR, app_id.clone()))?
-		.map_or_else(
-			|| {
-				Err(report!("Invalid App ID")
-					.attach_custom::<crate::handlers::EnvVarHandler, _>((APP_ID_VAR, app_id)))
-			},
-			|app_id| Ok(steam_app::source_systemd_unit_properties(app_id)),
-		)
+		.map_or_else(shortcut::source_systemd_unit_properties, |app_id| {
+			Ok(steam_app::source_systemd_unit_properties(app_id))
+		})
 		.map(|mut sourced| {
 			sourced.force_scope();
 			sourced
