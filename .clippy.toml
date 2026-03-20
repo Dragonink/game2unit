@@ -1,0 +1,6 @@
+check-private-items = true
+disallowed-methods = [
+	{ path = "alloc::boxed::Box::leak", reason = "do not leak memory" },
+	{ path = "alloc::vec::Vec::leak", reason = "do not leak memory" },
+	{ path = "alloc::string::String::leak", reason = "do not leak memory" },
+]
