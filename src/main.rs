@@ -1,5 +1,7 @@
 #![doc = env!("CARGO_PKG_DESCRIPTION")]
 
+use rootcause as _;
+
 fn main() {
 	setup_logger();
 
