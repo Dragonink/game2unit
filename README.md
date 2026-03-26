@@ -22,6 +22,18 @@ game2unit <program> [<program args>...]
 > game2unit env FOO=foo BAR=bar game --game-option
 > ```
 
+Created systemd units will be put under [`app.slice`](https://www.freedesktop.org/software/systemd/man/latest/systemd.special.html#app.slice) by default.
+That can be set using the `GAME2UNIT_SLICE` environment variable.
+
+> [!TIP]
+> If you are using [UWSM](https://github.com/Vladimir-csp/uwsm),
+> you should add the following to your configuration:
+> ```env
+> # ~/.config/uwsm/env
+> export GAME2UNIT_SLICE='app-graphical.slice'
+> ```
+
 ## Acknowledgements
 - This project originally started as a wrapper around [App2Unit](https://github.com/Vladimir-csp/app2unit) (❤️) before being rewritten to talk directly to systemd via D-Bus.
   That's the reason why the name "Game2Unit" is (heavily) inspired by "App2Unit".
+- Thanks to [runapp](https://github.com/c4rlo/runapp) for helping me understand [systemd-run](https://www.freedesktop.org/software/systemd/man/latest/systemd-run.html).
