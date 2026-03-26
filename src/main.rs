@@ -142,6 +142,7 @@ where
 /// Panics if a logger has previously been installed.
 fn setup_logger() {
 	use log::LevelFilter;
+	use tracing as _;
 
 	env_logger::Builder::new()
 		.format_indent(Some(8))
@@ -151,6 +152,8 @@ fn setup_logger() {
 		} else {
 			LevelFilter::Warn
 		})
+		.filter_module("zbus", LevelFilter::Warn)
+		.filter_module("tracing", LevelFilter::Off)
 		.parse_env("GAME2UNIT_LOG")
 		.init();
 }
